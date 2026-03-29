@@ -206,7 +206,7 @@ class SettingsActivity : AppCompatActivity() {
             TextToSpeech.Engine.ACTION_CHECK_TTS_DATA -> {
                 val availableVoices = ArrayList(
                     Prefs.getVoices(this)
-                        .map { Locale.forLanguageTag(it.locale.replace('_', '-')).toString() }
+                        .map { Locale.forLanguageTag(it.locale.replace('_', '-')).toLanguageTag() }
                         .filter { it.isNotBlank() }
                         .distinct()
                 )

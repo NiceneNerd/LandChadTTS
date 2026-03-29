@@ -235,18 +235,26 @@ class LandChadTtsService : TextToSpeechService() {
     }
 
     private fun Locale.safeIso3Language(): String {
+        val languageCode = language
+        if (languageCode.isBlank()) {
+            return ""
+        }
         return try {
-            if (language.isBlank()) "" else iso3Language
+            iso3Language
         } catch (_: MissingResourceException) {
-            language
+            languageCode
         }
     }
 
     private fun Locale.safeIso3Country(): String {
+        val countryCode = country
+        if (countryCode.isBlank()) {
+            return ""
+        }
         return try {
-            if (country.isBlank()) "" else iso3Country
+            iso3Country
         } catch (_: MissingResourceException) {
-            country
+            countryCode
         }
     }
 }
