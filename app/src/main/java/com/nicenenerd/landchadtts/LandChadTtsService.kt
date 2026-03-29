@@ -236,7 +236,7 @@ class LandChadTtsService : TextToSpeechService() {
 
     private fun Locale.safeIso3Language(): String {
         return try {
-            isO3Language
+            iso3Language
         } catch (_: MissingResourceException) {
             language
         }
@@ -244,7 +244,7 @@ class LandChadTtsService : TextToSpeechService() {
 
     private fun Locale.safeIso3Country(): String {
         return try {
-            if (country.isBlank()) "" else isO3Country
+            if (country.isBlank()) "" else iso3Country
         } catch (_: MissingResourceException) {
             country
         }
