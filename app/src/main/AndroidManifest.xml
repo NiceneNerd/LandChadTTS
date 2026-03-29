@@ -21,6 +21,9 @@
             </intent-filter>
             <!-- TTS engine configuration activity -->
             <intent-filter>
+                <action android:name="android.speech.tts.engine.CHECK_TTS_DATA" />
+            </intent-filter>
+            <intent-filter>
                 <action android:name="android.speech.tts.engine.INSTALL_TTS_DATA" />
             </intent-filter>
             <intent-filter>

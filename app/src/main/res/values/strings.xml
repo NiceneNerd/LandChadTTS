@@ -36,6 +36,7 @@
     <string name="fetch_error">Failed to fetch voices: %1$s</string>
     <string name="select_voices_to_add">Select voices to add</string>
     <string name="voice_details">ID: %1$s  ·  %2$s</string>
+    <string name="sample_text">This is a sample of the configured LandChadTTS voice.</string>
 
     <!-- Errors -->
     <string name="error_endpoint_required">Endpoint is required</string>

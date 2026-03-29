@@ -1,11 +1,13 @@
 package com.nicenenerd.landchadtts
 
 import android.media.AudioFormat
+import android.speech.tts.TextToSpeech
 import android.speech.tts.SynthesisCallback
 import android.speech.tts.SynthesisRequest
 import android.speech.tts.TextToSpeechService
 import android.speech.tts.Voice
 import android.util.Log
+import java.util.MissingResourceException
 import java.util.Locale
 
 /**
@@ -36,22 +38,20 @@ class LandChadTtsService : TextToSpeechService() {
     // ── TextToSpeechService contract ─────────────────────────────────────────
 
     override fun onIsLanguageAvailable(lang: String, country: String, variant: String): Int {
-        val voices = Prefs.getVoices(this)
-        return if (voices.any { it.locale.startsWith(lang, ignoreCase = true) }) {
-            android.speech.tts.TextToSpeech.LANG_AVAILABLE
-        } else {
-            android.speech.tts.TextToSpeech.LANG_NOT_SUPPORTED
-        }
+        val availability = Prefs.getVoices(this)
+            .map { matchLocale(parseLocale(it.locale), lang, country, variant) }
+            .maxOrNull()
+            ?: TextToSpeech.LANG_NOT_SUPPORTED
+        return availability
     }
 
     override fun onGetLanguage(): Array<String> {
-        val first = Prefs.getVoices(this).firstOrNull()
+        val first = Prefs.getVoices(this).firstOrNull()?.let { parseLocale(it.locale) }
         if (first != null) {
-            val parts = first.locale.replace('_', '-').split("-")
             return arrayOf(
-                parts.getOrElse(0) { "" },
-                parts.getOrElse(1) { "" },
-                ""
+                first.safeIso3Language(),
+                first.safeIso3Country(),
+                first.variant.orEmpty()
             )
         }
         return arrayOf("", "", "")
@@ -94,10 +94,10 @@ class LandChadTtsService : TextToSpeechService() {
         }
 
     override fun onGetDefaultVoiceNameFor(lang: String, country: String, variant: String): String? {
-        val voices = Prefs.getVoices(this)
-        val prefix = if (country.isNotBlank()) "$lang-$country" else lang
-        return voices.firstOrNull { it.locale.startsWith(prefix, ignoreCase = true) }?.voiceId
-            ?: voices.firstOrNull { it.locale.startsWith(lang, ignoreCase = true) }?.voiceId
+        return Prefs.getVoices(this)
+            .maxByOrNull { matchLocale(parseLocale(it.locale), lang, country, variant) }
+            ?.takeIf { matchLocale(parseLocale(it.locale), lang, country, variant) != TextToSpeech.LANG_NOT_SUPPORTED }
+            ?.voiceId
     }
 
     // ── Synthesis ────────────────────────────────────────────────────────────
@@ -180,15 +180,45 @@ class LandChadTtsService : TextToSpeechService() {
 
         val lang = request.language ?: ""
         val country = request.country ?: ""
+        val variant = request.variant ?: ""
         if (lang.isNotBlank()) {
-            val fullLocale = if (country.isNotBlank()) "$lang-$country" else lang
-            voices.firstOrNull { it.locale.startsWith(fullLocale, ignoreCase = true) }
-                ?.let { return it.voiceId }
-            voices.firstOrNull { it.locale.startsWith(lang, ignoreCase = true) }
+            voices.maxByOrNull { matchLocale(parseLocale(it.locale), lang, country, variant) }
+                ?.takeIf { matchLocale(parseLocale(it.locale), lang, country, variant) != TextToSpeech.LANG_NOT_SUPPORTED }
                 ?.let { return it.voiceId }
         }
 
         return voices.first().voiceId
+    }
+
+    private fun matchLocale(locale: Locale, lang: String, country: String, variant: String): Int {
+        if (lang.isBlank() || !matchesLanguage(locale, lang)) {
+            return TextToSpeech.LANG_NOT_SUPPORTED
+        }
+        if (country.isBlank()) {
+            return TextToSpeech.LANG_AVAILABLE
+        }
+        if (!matchesCountry(locale, country)) {
+            return TextToSpeech.LANG_AVAILABLE
+        }
+        if (variant.isBlank()) {
+            return TextToSpeech.LANG_COUNTRY_AVAILABLE
+        }
+        return if (locale.variant.equals(variant, ignoreCase = true)) {
+            TextToSpeech.LANG_COUNTRY_VAR_AVAILABLE
+        } else {
+            TextToSpeech.LANG_COUNTRY_AVAILABLE
+        }
+    }
+
+    private fun matchesLanguage(locale: Locale, lang: String): Boolean {
+        return locale.language.equals(lang, ignoreCase = true) ||
+            locale.safeIso3Language().equals(lang, ignoreCase = true)
+    }
+
+    private fun matchesCountry(locale: Locale, country: String): Boolean {
+        if (country.isBlank()) return true
+        return locale.country.equals(country, ignoreCase = true) ||
+            locale.safeIso3Country().equals(country, ignoreCase = true)
     }
 
     private fun parseLocale(locale: String): Locale {
@@ -201,6 +231,22 @@ class LandChadTtsService : TextToSpeechService() {
             }
         } catch (e: Exception) {
             Locale.US
+        }
+    }
+
+    private fun Locale.safeIso3Language(): String {
+        return try {
+            isO3Language
+        } catch (_: MissingResourceException) {
+            language
+        }
+    }
+
+    private fun Locale.safeIso3Country(): String {
+        return try {
+            if (country.isBlank()) "" else isO3Country
+        } catch (_: MissingResourceException) {
+            country
         }
     }
 }
