@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Metadata file referenced by the TTS engine service declaration in AndroidManifest.xml.
+    This empty element is required for the system to recognise the service as a TTS engine.
+-->
+<tts-engine xmlns:android="http://schemas.android.com/apk/res/android" />

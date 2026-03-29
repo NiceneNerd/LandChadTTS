@@ -1,0 +1,8 @@
+<resources>
+    <color name="colorPrimary">#FF4285F4</color>
+    <color name="colorPrimaryVariant">#FF2962FF</color>
+    <color name="colorOnPrimary">#FFFFFFFF</color>
+    <color name="colorSecondary">#FF03DAC5</color>
+    <color name="colorSecondaryVariant">#FF018786</color>
+    <color name="colorOnSecondary">#FF000000</color>
+</resources>
