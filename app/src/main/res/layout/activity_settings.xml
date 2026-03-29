@@ -36,7 +36,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/section_server"
-                android:textAppearance="?attr/textAppearanceTitleMedium"
+                android:textAppearance="@style/TextAppearance.MaterialComponents.Headline6"
                 android:layout_marginBottom="8dp" />
 
             <com.google.android.material.textfield.TextInputLayout
@@ -106,7 +106,7 @@
             <View
                 android:layout_width="match_parent"
                 android:layout_height="1dp"
-                android:background="?attr/colorOutline"
+                android:background="@color/divider"
                 android:layout_marginBottom="24dp" />
 
             <!-- Voices Section -->
@@ -115,14 +115,14 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/section_voices"
-                android:textAppearance="?attr/textAppearanceTitleMedium"
+                android:textAppearance="@style/TextAppearance.MaterialComponents.Headline6"
                 android:layout_marginBottom="4dp" />
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/voices_description"
-                android:textAppearance="?attr/textAppearanceBodySmall"
+                android:textAppearance="@style/TextAppearance.MaterialComponents.Body2"
                 android:layout_marginBottom="16dp" />
 
             <LinearLayout
