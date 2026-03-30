@@ -5,6 +5,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
+import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.util.concurrent.TimeUnit
 
@@ -26,36 +27,60 @@ class TtsClient(
         .writeTimeout(30, TimeUnit.SECONDS)
         .build()
 
-    private val baseUrl: String get() = endpoint.trimEnd('/')
+    private val apiBaseUrl: String
+        get() {
+            val normalized = endpoint.trimEnd('/')
+            return if (normalized.endsWith("/v1", ignoreCase = true)) {
+                normalized
+            } else {
+                "$normalized/v1"
+            }
+        }
 
     /**
-     * Calls POST /v1/audio/speech and returns raw PCM bytes (24 kHz, 16-bit, mono).
+     * Calls POST /v1/audio/speech and streams raw PCM bytes (24 kHz, 16-bit, mono)
+     * to [onAudioChunk] as they arrive.
      *
      * @throws IOException on network or server errors.
      */
-    fun synthesize(text: String, voiceId: String): ByteArray {
-        val bodyJson = JSONObject().apply {
-            if (model.isNotBlank()) put("model", model)
-            put("input", text)
-            put("voice", voiceId)
-            put("response_format", "pcm")
-        }
+    fun streamSynthesize(
+        text: String,
+        voiceId: String,
+        speed: Double? = null,
+        onResponseStarted: () -> Unit = {},
+        onAudioChunk: (buffer: ByteArray, length: Int) -> Unit
+    ) {
+        val response = client.newCall(buildSynthesisRequest(text, voiceId, speed)).execute()
+        response.use { httpResponse ->
+            if (!httpResponse.isSuccessful) {
+                val body = httpResponse.body?.string() ?: ""
+                throw IOException("TTS synthesis failed (HTTP ${httpResponse.code}): $body")
+            }
 
-        val requestBuilder = Request.Builder()
-            .url("$baseUrl/v1/audio/speech")
-            .post(bodyJson.toString().toRequestBody("application/json".toMediaType()))
-
-        if (apiKey.isNotBlank()) {
-            requestBuilder.header("Authorization", "Bearer $apiKey")
+            val body = httpResponse.body ?: throw IOException("Server returned an empty response body")
+            onResponseStarted()
+            body.byteStream().use { input ->
+                val buffer = ByteArray(8192)
+                while (true) {
+                    val read = input.read(buffer)
+                    if (read < 0) break
+                    if (read > 0) {
+                        onAudioChunk(buffer, read)
+                    }
+                }
+            }
         }
+    }
 
-        val response = client.newCall(requestBuilder.build()).execute()
-        if (!response.isSuccessful) {
-            val body = response.body?.string() ?: ""
-            throw IOException("TTS synthesis failed (HTTP ${response.code}): $body")
+    /**
+     * Backwards-compatible buffered synthesis helper.
+     */
+    fun synthesize(text: String, voiceId: String, speed: Double? = null): ByteArray {
+        val output = ByteArrayOutputStream()
+        streamSynthesize(text, voiceId, speed) { buffer, length ->
+            output.write(buffer, 0, length)
         }
-        return response.body?.bytes()
-            ?: throw IOException("Server returned an empty response body")
+        return output.toByteArray()
     }
 
     /**
@@ -73,7 +98,7 @@ class TtsClient(
     // ── private helpers ──────────────────────────────────────────────────────
 
     private fun tryFetchAudioVoices(): List<VoiceConfig>? = runCatching {
-        val response = get("$baseUrl/v1/audio/voices") ?: return null
+        val response = get("$apiBaseUrl/audio/voices") ?: return null
         val json = JSONObject(response)
         val arr = json.optJSONArray("voices") ?: json.optJSONArray("data") ?: return null
 
@@ -91,7 +116,7 @@ class TtsClient(
     }.getOrNull()
 
     private fun tryFetchModels(): List<VoiceConfig>? = runCatching {
-        val response = get("$baseUrl/v1/models") ?: return null
+        val response = get("$apiBaseUrl/models") ?: return null
         val json = JSONObject(response)
         val data = json.optJSONArray("data") ?: return null
 
@@ -114,4 +139,24 @@ class TtsClient(
 
     private fun normalizeLocale(language: String): String =
         language.replace('_', '-')
+
+    private fun buildSynthesisRequest(text: String, voiceId: String, speed: Double?): Request {
+        val bodyJson = JSONObject().apply {
+            if (model.isNotBlank()) put("model", model)
+            put("input", text)
+            put("voice", voiceId)
+            put("response_format", "pcm")
+            speed?.let { put("speed", it) }
+        }
+
+        val requestBuilder = Request.Builder()
+            .url("$apiBaseUrl/audio/speech")
+            .post(bodyJson.toString().toRequestBody("application/json".toMediaType()))
+
+        if (apiKey.isNotBlank()) {
+            requestBuilder.header("Authorization", "Bearer $apiKey")
+        }
+
+        return requestBuilder.build()
+    }
 }

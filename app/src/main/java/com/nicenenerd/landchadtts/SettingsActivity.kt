@@ -1,9 +1,7 @@
 package com.nicenenerd.landchadtts
 
 import android.app.AlertDialog
-import android.content.Intent
 import android.os.Bundle
-import android.speech.tts.TextToSpeech
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -15,7 +13,6 @@ import com.nicenenerd.landchadtts.databinding.ActivitySettingsBinding
 import com.nicenenerd.landchadtts.databinding.DialogAddVoiceBinding
 import com.nicenenerd.landchadtts.databinding.ItemVoiceBinding
 import java.util.concurrent.Executors
-import java.util.Locale
 
 class SettingsActivity : AppCompatActivity() {
 
@@ -25,9 +22,6 @@ class SettingsActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        if (handleTtsEngineIntent(intent)) {
-            return
-        }
         binding = ActivitySettingsBinding.inflate(layoutInflater)
         setContentView(binding.root)
         setSupportActionBar(binding.toolbar)
@@ -201,53 +195,10 @@ class SettingsActivity : AppCompatActivity() {
             .show()
     }
 
-    private fun handleTtsEngineIntent(intent: Intent?): Boolean {
-        return when (intent?.action) {
-            TextToSpeech.Engine.ACTION_CHECK_TTS_DATA -> {
-                val availableVoices = ArrayList(
-                    Prefs.getVoices(this)
-                        .map { Locale.forLanguageTag(it.locale.replace('_', '-')).toLanguageTag() }
-                        .filter { it.isNotBlank() }
-                        .distinct()
-                )
-                setResult(
-                    if (availableVoices.isEmpty()) {
-                        TextToSpeech.Engine.CHECK_VOICE_DATA_MISSING_DATA
-                    } else {
-                        TextToSpeech.Engine.CHECK_VOICE_DATA_PASS
-                    },
-                    Intent().apply {
-                        putStringArrayListExtra(TextToSpeech.Engine.EXTRA_AVAILABLE_VOICES, availableVoices)
-                        putStringArrayListExtra(
-                            TextToSpeech.Engine.EXTRA_UNAVAILABLE_VOICES,
-                            arrayListOf()
-                        )
-                    }
-                )
-                finish()
-                true
-            }
-
-            TextToSpeech.Engine.ACTION_GET_SAMPLE_TEXT -> {
-                setResult(
-                    TextToSpeech.LANG_AVAILABLE,
-                    Intent().putExtra(
-                        TextToSpeech.Engine.EXTRA_SAMPLE_TEXT,
-                        getString(R.string.sample_text)
-                    )
-                )
-                finish()
-                true
-            }
-
-            else -> false
-        }
-    }
-
     private fun notifyVoiceDataChanged() {
         sendBroadcast(
-            Intent(TextToSpeech.Engine.ACTION_TTS_DATA_INSTALLED).apply {
-                putExtra(TextToSpeech.Engine.EXTRA_TTS_DATA_INSTALLED, true)
+            android.content.Intent(android.speech.tts.TextToSpeech.Engine.ACTION_TTS_DATA_INSTALLED).apply {
+                putExtra(android.speech.tts.TextToSpeech.Engine.EXTRA_TTS_DATA_INSTALLED, true)
             }
         )
     }
