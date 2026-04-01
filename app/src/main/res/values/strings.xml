@@ -1,0 +1,44 @@
+<resources>
+    <string name="app_name">LandChadTTS</string>
+
+    <!-- Settings sections -->
+    <string name="section_server">Server Settings</string>
+    <string name="section_voices">Voices</string>
+
+    <!-- Input hints -->
+    <string name="hint_endpoint">Server Endpoint URL</string>
+    <string name="hint_model">Model (optional)</string>
+    <string name="hint_api_key">API Key (optional)</string>
+    <string name="hint_display_name">Display Name</string>
+    <string name="hint_voice_id">Voice ID</string>
+    <string name="hint_locale">Locale</string>
+
+    <!-- Helper texts -->
+    <string name="helper_endpoint">e.g. https://api.openai.com</string>
+    <string name="helper_model">e.g. tts-1 or tts-1-hd</string>
+    <string name="helper_locale">e.g. en-US, de-DE, ja-JP</string>
+
+    <!-- Buttons -->
+    <string name="save_settings">Save Settings</string>
+    <string name="fetch_voices">Fetch Voices from Server</string>
+    <string name="add_voice_manually">Add Voice Manually</string>
+    <string name="add_voice">Add Voice</string>
+    <string name="edit_voice">Edit Voice</string>
+    <string name="delete_voice">Delete voice</string>
+    <string name="save">Save</string>
+    <string name="cancel">Cancel</string>
+    <string name="add_selected">Add Selected</string>
+
+    <!-- Messages -->
+    <string name="settings_saved">Settings saved</string>
+    <string name="voices_description">Voices registered here appear as system TTS voices. Tap a voice to edit it.</string>
+    <string name="no_voices_found">No voices found. Try adding them manually.</string>
+    <string name="fetch_error">Failed to fetch voices: %1$s</string>
+    <string name="select_voices_to_add">Select voices to add</string>
+    <string name="voice_details">ID: %1$s  ·  %2$s</string>
+    <string name="sample_text">This is a sample of the configured LandChadTTS voice.</string>
+
+    <!-- Errors -->
+    <string name="error_endpoint_required">Endpoint is required</string>
+    <string name="error_all_fields_required">All fields are required</string>
+</resources>

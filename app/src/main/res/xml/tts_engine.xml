@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Metadata file referenced by the TTS engine service declaration in AndroidManifest.xml.
+    It declares the app's settings activity so Android can open configuration and
+    voice-data checks for the engine.
+-->
+<tts-engine
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:settingsActivity="com.nicenenerd.landchadtts.SettingsActivity" />
